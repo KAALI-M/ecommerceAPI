@@ -1,6 +1,10 @@
 from rest_framework.pagination import PageNumberPagination
 
 class CustomPagination(PageNumberPagination):
+    """
+    Custom pagination class that allows control over page size and limits.
+    Provides default, maximum, and client-configurable page sizes.
+    """
     # Set the default number of items per page
     page_size = 10
     

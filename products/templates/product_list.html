@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold mb-6">Welcome to YourStore</h1>
+    <div id="product-list" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                
+                <!-- Carousel for product images -->
+                <div id="carousel-{{ product.id }}" class="carousel slide" data-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in product.images.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" alt="{{ product.name }}" class="d-block w-full h-50 object-cover">
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Carousel controls -->
+                    <a class="carousel-control-prev" href="#carousel-{{ product.id }}" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href="#carousel-{{ product.id }}" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+
+                <!-- Product details -->
+                <div class="p-6">
+                    <h1 class="text-lg font-semibold mb-2">{{ product.name }}</h1>
+                    <p class="text-sm text-gray-600 mb-4">{{ product.description|truncatewords:20 }}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-lg font-bold">${{ product.price }}</span>
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination Links -->
+    <div class="pagination mt-8">
+        {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}" class="px-4 py-2 border rounded bg-gray-200">Previous</a>
+        {% endif %}
+        <span class="px-4 py-2">{{ products.number }} of {{ products.paginator.num_pages }}</span>
+        {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}" class="px-4 py-2 border rounded bg-gray-200">Next</a>
+        {% endif %}
+    </div>
+{% endblock %}

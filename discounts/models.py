@@ -3,6 +3,7 @@ from django.db import models
 
 # Create your models here.
 class Discount(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True)
     amount = models.DecimalField(max_digits=5, decimal_places=2)
     start_date = models.DateField()
     end_date = models.DateField() 

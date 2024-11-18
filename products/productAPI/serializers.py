@@ -8,11 +8,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['image']
 
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Product resource.
+    Handles validation and nested relationships with images.
+    """
     images = ProductImageSerializer(many=True, read_only = True) # Nested serializer for related images
     class Meta:
         model = Product
         fields = ['id','name','description','price','stock_quantity','created_date','category', 'images']
-
         #validations 
         name = serializers.CharField(required=True, error_messages={'required': 'Name is required.'})
         price = serializers.DecimalField(

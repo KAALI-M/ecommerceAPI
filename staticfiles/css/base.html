@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}YourStore{% endblock %}</title>
+    <link href="styles.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-50">
+    <header class="sticky top-0 z-40 w-full border-b bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button id="sidebar-toggle" class="md:hidden text-gray-500 hover:text-gray-700">
+                    <span class="sr-only">Toggle sidebar</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <a href="/" class="flex items-center space-x-2 text-xl font-bold text-gray-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>YourStore</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-4">
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-gray-900">Home</a>
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-gray-900">Products</a>
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-gray-900">Categories</a>
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-gray-900">About</a>
+                <a href="#" class="text-sm font-medium text-gray-700 hover:text-gray-900">Contact</a>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <form class="relative hidden md:block">
+                    <input type="search" placeholder="Search products..." class="w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </input>
+                </form>
+                <button id="user-menu-button" class="text-gray-700 hover:text-gray-900">
+                    <span class="sr-only">User account</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </button>
+                <button class="text-gray-700 hover:text-gray-900">
+                    <span class="sr-only">Shopping cart</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="flex flex-1">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r transform -translate-x-full transition-transform duration-300 ease-in-out md:translate-x-0 md:static">
+            <div class="flex items-center justify-between p-4 md:hidden">
+                <span class="text-lg font-semibold">Menu</span>
+                <button id="close-sidebar" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <nav class="space-y-2 p-4">
+                <a href="#" class="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>All Products</span>
+                </a>
+                <div class="space-y-2">
+                    <h3 class="px-3 text-sm font-semibold text-gray-500">Filters</h3>
+                    <div class="space-y-2">
+                        <h4 class="px-3 text-xs font-medium text-gray-500">Category</h4>
+                        <div class="space-y-1">
+                            {% for category in categories %}
+                            <label class="flex items-center px-3 py-1 text-sm">
+                                <input type="checkbox" name="category" value="{{ category.id }}" class="mr-2 rounded text-blue-500 focus:ring-blue-500">
+                                {{ category.name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="px-3 text-xs font-medium text-gray-500">Price Range</h4>
+                        <div class="px-3">
+                            <input type="range" id="price-range" min="0" max="1000" step="10" class="w-full">
+                            <div class="flex justify-between text-xs mt-1">
+                                <span>$0</span>
+                                <span id="price-value"></span>
+                                <span>$1000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        <main class="flex-1 p-6">
+            {% block content %}
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold mb-6">Welcome to YourStore</h1>
+                <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for product in products %}
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold mb-2">{{ product.name }}</h3>
+                            <p class="text-sm text-gray-600 mb-4">{{ product.description|truncatewords:20 }}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-lg font-bold">${{ product.price }}</span>
+                                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add to Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endblock %}
+        </main>
+    </div>
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">About YourStore</h3>
+                    <p class="text-gray-400">
+                        We offer a curated selection of high-quality products to enhance your lifestyle. Our mission is to provide exceptional customer service and unparalleled shopping experiences.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Shipping Information</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Returns & Exchanges</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Stay Connected</h3>
+                    <p class="text-gray-400 mb-4">Subscribe to our newsletter for exclusive offers and updates.</p>
+                    <form class="flex">
+                        <input type="email" placeholder="Your email address" class="rounded-l-md px-4 py-2 w-full text-gray-900">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+                <p>&copy; 2024 YourStore. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

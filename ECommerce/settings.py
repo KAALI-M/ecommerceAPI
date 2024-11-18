@@ -18,7 +18,7 @@ from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent  # BASE_DIR is now a Path object
-load_dotenv(os.path.join(BASE_DIR/"eVar", ".env"))  # Load environment variables from .eVar/.env file in BASE_DIR / '.env')
+load_dotenv(os.path.join(BASE_DIR/".eVar", ".env"))  # Load environment variables from .eVar/.env file in BASE_DIR / '.env')
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -29,14 +29,13 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # Using / operator with Path
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'  # Using /
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = 'django-insecure-s2%wb^pdhmm+tshd0331&z_)rz1x&(5*9+23b_ak=0_e-jtb%$'
-## SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = True
-#ALLOWED_HOSTS = []
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+DATABASES = {
+    'default': dj_database_url.config(
+        default="mysql://alxuser:alx123456789@localhost:3306/ecommerceapi"  # Local MySQL for development
+    )
+}
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-s2%wb^pdhmm+tshd0331&z_)rz1x&(5*9+23b_ak=0_e-jtb%$')
 
@@ -100,22 +99,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ECommerce.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',  # MySQL database engine
-        'NAME': 'ecommerceapi',          # Database name
-        'USER': 'alxuser',               # Database user
-        'PASSWORD': 'alx123456789',           # Database password
-        'HOST': 'localhost',                   # Database host, usually 'localhost'
-        'PORT': '3306',                        # MySQL port, default is 3306
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-        }
-    }
-}
 
 
 # Password validation

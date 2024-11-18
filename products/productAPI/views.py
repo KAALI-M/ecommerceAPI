@@ -13,6 +13,11 @@ from rest_framework.exceptions import NotFound
 
 
 class ModelPermissions(permissions.DjangoModelPermissions):
+    """
+    Custom permission class for controlling product access.
+    Allows all users to view products, while only authenticated users with appropriate permissions
+    can add, update, or delete products.
+    """
     def has_permission(self, request, view):
         user = request.user
         if  request.method == 'GET':
@@ -30,6 +35,9 @@ class ModelPermissions(permissions.DjangoModelPermissions):
         return False
     
 class ProductFilter(FilterSet):
+    """
+    FilterSet for filtering products based on category, price range, and stock availability.
+    """
     category = NumberFilter(field_name='category', lookup_expr='exact')
     price_min = NumberFilter(field_name='price', lookup_expr='gte')
     price_max = NumberFilter(field_name='price', lookup_expr='lte')
@@ -40,6 +48,10 @@ class ProductFilter(FilterSet):
         fields = ['category', 'price_min', 'price_max', 'in_stock']
 
 class ProductViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing Product resources.
+    Provides CRUD operations, filtering, searching, and pagination functionality.
+    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [ModelPermissions]
