@@ -1,41 +1,66 @@
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework import status
+
+from rest_framework import viewsets
+from rest_framework import permissions
 from orders.models import Order
 from orders.ordersAPI.serializers import OrderSerializer
 from rest_framework.permissions import IsAuthenticated
 
-class OrderListView(generics.ListAPIView):
+class ModelPermissions(permissions.BasePermission):
     """
-    List orders for the current user.
+    Custom permission to allow owners to CRUD their own objects.
+    Staff and superusers can read all objects.
     """
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def has_permission(self, request, view):
         """
-        This view should return a list of all orders
-        for the currently authenticated user.
-        """
-        return Order.objects.filter(user=self.request.user)
+        Determines if the user has permission to perform the requested operation.
 
-class OrderCreateView(generics.CreateAPIView):
+        - Allows any authenticated user to create a new wishlist.
+        - Allows authenticated users to view their own wishlist.
+        - Restricts modification and deletion to the object owner only.
+        """
+        # Only authenticated users can access these views
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Custom permission for object-level access:
+        - Allow staff and superusers to read any object.
+        - Allow owners to access safe methods on their objects.
+        - Restrict modification and deletion to the object owner only.
+        """
+        # Allow staff and superusers to read any object
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_staff or request.user.is_superuser or obj.user.id == request.user.id
+        # Only the owner can modify or delete their object
+        return obj.user.id == request.user.id
+
+class OrderViewSet(viewsets.ModelViewSet):
     """
-    Create a new order.
+    View for managing orders.    
     """
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-
-class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update or delete an order.
-    """
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [ModelPermissions]
 
     def get_queryset(self):
+          
         """
-        This view should return only orders owned by the current user.
+        Override the get_queryset method to filter orders based on the user.
         """
-        return Order.objects.filter(user=self.request.user)
+        # If the user is a staff or superuser, return all Objects
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return self.queryset
+        # Check if the request is a GET and the view action is 'list'
+        if self.request.method == 'GET' and self.action == 'list':
+            return self.queryset.filter(user=self.request.user)
+
+        # Default behavior for other cases
+        return self.queryset
+
+
+    def perform_create(self, serializer):
+        """
+        Override the perform_create method to automatically associate the order with the current user.
+        """
+        serializer.save(user=self.request.user)

@@ -18,7 +18,7 @@ class ReviewTests(TestCase):
             description='Test Description', 
             stock_quantity=10, 
             price=10.00,
-            category=self.category  # Add the category
+            category=self.category 
         )
 
     def test_create_review(self):

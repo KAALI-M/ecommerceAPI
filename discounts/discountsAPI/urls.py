@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import DiscountViewSet
+from discounts.discountsAPI.views import DiscountViewSet
+
 
 
 # Define the router and register the ProductViewSet

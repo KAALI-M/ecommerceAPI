@@ -3,43 +3,36 @@ from wishlist.models import Wishlist
 from .serializers import WishlistSerializer
 from rest_framework.permissions import BasePermission
 
-class ModelPermissions(BasePermission):
-    from rest_framework.permissions import BasePermission
 
-class ModelPermissions(BasePermission):
+class ModelPermissions(permissions.BasePermission):
     """
-    Custom permission class for controlling data access:
-    - All users can CRUD (Create, Read, Update, Delete) only their own objects.
-    - Staff users and Superusers can only read (GET) all objects, but cannot create, update, or delete them.
+    Custom permission to allow owners to CRUD their own objects.
+    Staff and superusers can read all objects.
     """
 
     def has_permission(self, request, view):
         """
-        This method checks if the user has permission to access the view.
-        Allows all users to perform GET requests (view data).
-        Other methods (POST, PUT, DELETE) are allowed only for authenticated users.
-        """
+        Determines if the user has permission to perform the requested operation.
 
-        if request.user.is_authenticated and request.method == 'GET':
-            return True  # Allow all users to view data
-        return request.user and request.user.is_authenticated  # Allow authenticated users for other methods
+        - Allows any authenticated user to create a new wishlist.
+        - Allows authenticated users to view their own wishlist.
+        - Restricts modification and deletion to the object owner only.
+        """
+        # Only authenticated users can access these views
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         """
-        This method checks if the user has permission to access a specific object.
+        Custom permission for object-level access:
+        - Allow staff and superusers to read any object.
+        - Allow owners to access safe methods on their objects.
+        - Restrict modification and deletion to the object owner only.
         """
-
-        # Case 1: Staff or Superuser can only view (GET) the object but cannot modify it
-        if request.user.is_staff or request.user.is_superuser:
-            if request.method == 'GET':
-                return True  # Allow GET request for staff or superuser
-            return False  # Disallow non-GET requests (POST, PUT, DELETE)
-
-        # Case 2: Authenticated user can only access their own object (CRUD)
-        if request.user.is_authenticated:
-            if obj.user == request.user:  # Only the owner of the object can perform actions
-                return True  # Allow CRUD actions for the object owner (GET, POST, PUT, DELETE)
-        return False  # Disallow access for others (non-authenticated or non-matching user)
+        # Allow staff and superusers to read any object
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_staff or request.user.is_superuser or obj.user.id == request.user.id
+        # Only the owner can modify or delete their object
+        return obj.user.id == request.user.id
 
     
 class WishlistViewSet(viewsets.ModelViewSet):
@@ -49,20 +42,23 @@ class WishlistViewSet(viewsets.ModelViewSet):
 
     queryset = Wishlist.objects.all()
     serializer_class = WishlistSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [ModelPermissions]
 
     def get_queryset(self):
         """
         Override the get_queryset method to filter wishlists based on the user.
         """
-        # If the user is a staff or superuser, allow them to see all wishlists
+        # If the user is a staff or superuser, return all Objects
         if self.request.user.is_staff or self.request.user.is_superuser:
-            return Wishlist.objects.all()
+            return self.queryset
+        # Check if the request is a GET and the view action is 'list'
+        if self.request.method == 'GET' and self.action == 'list':
+            return self.queryset.filter(user=self.request.user)
+
+        # Default behavior for other cases
+        return self.queryset
         
-        # For regular authenticated users, only show their own wishlists
-        return Wishlist.objects.filter(user=self.request.user)
-
-
+    
     def perform_create(self, serializer):
         """
         Override the perform_create method to automatically associate the wishlist with the current user.

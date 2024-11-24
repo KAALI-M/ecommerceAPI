@@ -5,7 +5,8 @@ from django.core.validators import MinValueValidator
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ['image']
+        fields = ['id','image']
+        read_only_fields = ['id']
 
 class ProductSerializer(serializers.ModelSerializer):
     """

@@ -1,134 +1,133 @@
-from rest_framework.test import APITestCase
-from django.contrib.auth.models import User
-from products.models import Product, Category
-from .models import Wishlist
+from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from django.urls import reverse
+from django.contrib.auth.models import User
+from wishlist.models import Wishlist
+from products.models import Product
+from categories.models import Category
+from rest_framework_simplejwt.tokens import RefreshToken
 
-class WishlistAPITestCase(APITestCase):
+class WishlistViewSetTest(APITestCase):
     def setUp(self):
-        """
-        Set up the test environment.
-        Create test users and products.
-        """
-        # Create test user
-        self.user = User.objects.create_user(
-            username="testuser",
-            password="testpassword",
-            email="test@example.com"
-        )
-        
-        # Create test category
-        self.category = Category.objects.create(name="Test Category")
-        
-        # Create test product - note the lowercase 'category' field name
-        self.product = Product.objects.create(
-            name="Test Product",
-            stock_quantity=100,
-            price=9.99,
-            category=self.category  # Changed from Category to category
-        )
-        
-        # Force authenticate the user instead of using login
-        self.client.force_authenticate(user=self.user)
-        
-        # Use reverse to generate URLs
-        self.wishlist_url = reverse('wishlist-list')  # Make sure this matches your URL name
-        
-        self.wishlist_data = {
-            "name": "My Wishlist",
-            "products": [self.product.id]
-        }
 
-    def test_create_wishlist_authenticated(self):
-        """
-        Test that an authenticated user can create a wishlist.
-        """
-        response = self.client.post(self.wishlist_url, self.wishlist_data, format='json')
-        print(f'url: {self.wishlist_url}', f'data: {self.wishlist_data}')
+
+        # Create users
+        self.superuser = User.objects.create_superuser(username='admin', password='admin123', email='admin@example.com')
+        self.staff_user = User.objects.create_user(username='staff', password='staff123', email='staff@example.com', is_staff=True)
+        self.user = User.objects.create_user(username='user', password='user123', email='user@example.com')
+        self.other_user = User.objects.create_user(username='other_user', password='other123', email='other@example.com')
+
+        # Generate JWT tokens
+        self.superuser_token = self.get_token(self.superuser)
+        self.staff_user_token = self.get_token(self.staff_user)
+        self.user_token = self.get_token(self.user)
+        self.other_user_token = self.get_token(self.other_user)
+
+        
+        # Create a category first
+        self.category = Category.objects.create(name='Test Category')
+        # Create sample products
+        self.product1 = Product.objects.create(name="Product 1", price=50.00, stock_quantity=100,category=self.category  )
+        self.product2 = Product.objects.create(name="Product 2", price=30.00, stock_quantity=200, category=self.category )
+
+        # Create sample wishlists
+        self.wishlist1 = Wishlist.objects.create(name="User Wishlist", user=self.user)
+        self.wishlist1.products.set([self.product1, self.product2])
+
+        self.wishlist2 = Wishlist.objects.create(name="Other User Wishlist", user=self.other_user)
+        self.wishlist2.products.set([self.product1])
+
+        # API client
+        self.client = APIClient()
+
+    def get_token(self, user):
+        """Generate JWT token for a user."""
+        refresh = RefreshToken.for_user(user)
+        return str(refresh.access_token)
+
+    def authenticate(self, token):
+        """Authenticate the client with the provided token."""
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+    def test_get_wishlists_authenticated_user(self):
+        """Test that authenticated users can only access their own wishlists."""
+        self.authenticate(self.user_token)
+        response = self.client.get('/api/wishlists/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.wishlist1.id)
+
+    def test_get_wishlists_superuser(self):
+        """Test that superusers can access all wishlists."""
+        self.authenticate(self.superuser_token)
+        response = self.client.get('/api/wishlists/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_create_wishlist_authenticated_user(self):
+        """Test that authenticated users can create wishlists."""
+        self.authenticate(self.user_token)
+        data = {
+            "name": "New Wishlist",
+            "products": [self.product1.id]
+        }
+        response = self.client.post('/api/wishlists/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['name'], self.wishlist_data['name'])
-        self.assertEqual(response.data['user'], self.user.id)
-        # Verify the product was added to the wishlist
-        self.assertIn(self.product.id, response.data['products'])
+        self.assertEqual(Wishlist.objects.count(), 3)
+        self.assertEqual(Wishlist.objects.last().user, self.user)
 
     def test_create_wishlist_unauthenticated(self):
-        """
-        Test that an unauthenticated user cannot create a wishlist.
-        """
-        # Clear the authentication
-        self.client.force_authenticate(user=None)
-        response = self.client.post(self.wishlist_url, self.wishlist_data, format='json')
+        """Test that unauthenticated users cannot create wishlists."""
+        data = {
+            "name": "Unauthorized Wishlist",
+            "products": [self.product1.id]
+        }
+        response = self.client.post('/api/wishlists/', data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_create_wishlist_other_user(self):
-        """
-        Test that a user cannot create a wishlist for another user.
-        """
-        other_user = User.objects.create_user(
-            username="otheruser",
-            password="otherpassword",
-            email="other@example.com"
-        )
-        invalid_wishlist_data = {
-            "name": "Invalid Wishlist",
-            "user": other_user.id,
-            "products": [self.product.id]
+    def test_update_wishlist_owner(self):
+        """Test that users can update their own wishlists."""
+        self.authenticate(self.user_token)
+        data = {
+            "name": "Updated Wishlist",
+            "products": [self.product2.id]
         }
-        print('invalid_wishlist_data', invalid_wishlist_data)
-        response = self.client.post(self.wishlist_url, invalid_wishlist_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_get_wishlist(self):
-        """
-        Test that an authenticated user can retrieve their own wishlist.
-        """
-        wishlist = Wishlist.objects.create(user=self.user, name="My Wishlist")
-        wishlist.products.add(self.product)
-        wishlist_detail_url = reverse('wishlist-detail', kwargs={'pk': wishlist.id})
-        response = self.client.get(wishlist_detail_url)
+        response = self.client.put(f'/api/wishlists/{self.wishlist1.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['user'], self.user.id)
-        self.assertIn(self.product.id, response.data['products'])
+        self.wishlist1.refresh_from_db()
+        self.assertEqual(self.wishlist1.name, "Updated Wishlist")
 
-    def test_get_other_users_wishlist(self):
-        """
-        Test that a user cannot retrieve another user's wishlist.
-        """
-        other_user = User.objects.create_user(
-            username="otheruser",
-            password="otherpassword",
-            email="other@example.com"
-        )
-        wishlist = Wishlist.objects.create(user=other_user, name="Other User's Wishlist")
-        wishlist.products.add(self.product)
-        wishlist_detail_url = reverse('wishlist-detail', kwargs={'pk': wishlist.id})
-        print('wishlist_detail_url', wishlist_detail_url)
-        response = self.client.get(wishlist_detail_url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_update_wishlist(self):
-        """
-        Test that a user can update their own wishlist.
-        """
-        wishlist = Wishlist.objects.create(user=self.user, name="Original Name")
-        wishlist.products.add(self.product)
-        wishlist_detail_url = reverse('wishlist-detail', kwargs={'pk': wishlist.id})
-        update_data = {
-            "name": "Updated Name",
-            "products": [self.product.id]
+    def test_update_wishlist_not_owner(self):
+        """Test that users cannot update wishlists they do not own."""
+        self.authenticate(self.user_token)
+        data = {
+            "name": "Hacked Wishlist",
+            "products": [self.product2.id]
         }
-        response = self.client.put(wishlist_detail_url, update_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], "Updated Name")
+        response = self.client.put(f'/api/wishlists/{self.wishlist2.id}/', data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_delete_wishlist(self):
-        """
-        Test that a user can delete their own wishlist.
-        """
-        wishlist = Wishlist.objects.create(user=self.user, name="To Be Deleted")
-        wishlist.products.add(self.product)
-        wishlist_detail_url = reverse('wishlist-detail', kwargs={'pk': wishlist.id})
-        response = self.client.delete(wishlist_detail_url)
+    def test_delete_wishlist_owner(self):
+        """Test that users can delete their own wishlists."""
+        self.authenticate(self.user_token)
+        response = self.client.delete(f'/api/wishlists/{self.wishlist1.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Wishlist.objects.filter(id=wishlist.id).exists())
+        self.assertEqual(Wishlist.objects.filter(id=self.wishlist1.id).count(), 0)
+
+    def test_delete_wishlist_not_owner(self):
+        """Test that users cannot delete wishlists they do not own."""
+        self.authenticate(self.user_token)
+        response = self.client.delete(f'/api/wishlists/{self.wishlist2.id}/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_wishlists_staff_user(self):
+        """Test that staff users can access all wishlists."""
+        self.authenticate(self.staff_user_token)
+        response = self.client.get('/api/wishlists/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_get_wishlists_unauthenticated(self):
+        """Test that unauthenticated users cannot view wishlists."""
+        response = self.client.get('/api/wishlists/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+

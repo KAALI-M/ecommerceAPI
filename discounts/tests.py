@@ -22,7 +22,7 @@ class DiscountViewSetTests(APITestCase):
         
         # Assign permissions to admin user
         permissions = Permission.objects.filter(
-            codename__in=['add_product', 'change_product', 'delete_product']
+            codename__in=['add_discount', 'change_discount', 'delete_discount']
         )
         self.admin_user.user_permissions.set(permissions)
 
