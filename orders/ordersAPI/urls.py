@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import OrderViewSet
+from orders.ordersAPI.views import OrderViewSet
 
 # Define the router and register the OrderViewSet
 router = DefaultRouter()

@@ -72,10 +72,12 @@ class OrderViewSetTest(TestCase):
         """Test that authenticated users can create orders"""
         self.authenticate(self.user_token)
         data = {
-            "total": 200.00,
-            "created_at": datetime.now(),
+            "product": self.product.id,
+            "quantity": 10,
         }
+        
         response = self.client.post('/api/orders/', data)
+        print("Order_quantity :",data["quantity"], "Product_stock_quantity : ",self.product.stock_quantity)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Order.objects.count(), 3)  # A new order is created
         self.assertEqual(Order.objects.last().user, self.user)  # Ensure the order is associated with the current user
@@ -83,8 +85,8 @@ class OrderViewSetTest(TestCase):
     def test_post_order_unauthenticated(self):
         """Test that unauthenticated users cannot create orders"""
         data = {
-            "total": 200.00,
-            "created_at": datetime.now(),
+            "product": self.product.id,
+            "quantity": 200,
         }
         response = self.client.post('/api/orders/', data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -93,18 +95,22 @@ class OrderViewSetTest(TestCase):
         """Test that users can update their own orders"""
         self.authenticate(self.user_token)
         data = {
-            "total": 120.00,
+            "product": self.product.id,
+            "quantity": 10,
         }
+        print("Order_quantity :",data["quantity"], "url",f'/api/orders/{self.order1.id}/')
+
         response = self.client.put(f'/api/orders/{self.order1.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.order1.refresh_from_db()
-        self.assertEqual(self.order1.total, 120.00)
+        self.assertEqual(self.order1.quantity, 10)
 
     def test_put_order_not_owner(self):
         """Test that users cannot update orders they do not own"""
         self.authenticate(self.user_token)
         data = {
-            "total": 120.00,
+            "product": self.product.id,
+            "quantity": 1,
         }
         response = self.client.put(f'/api/orders/{self.order2.id}/', data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
