@@ -20,9 +20,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ReviewPermission]
 
     def get_queryset(self):
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            return Review.objects.all()
-        return Review.objects.filter(user=self.request.user)
+        return self.queryset       
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
