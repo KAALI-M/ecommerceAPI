@@ -66,6 +66,9 @@ INSTALLED_APPS = [
     'categories',
     'django_extensions',
     'django_filters',
+    
+    
+    'drf_yasg',
 
 ]
 
