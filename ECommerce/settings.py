@@ -63,8 +63,12 @@ INSTALLED_APPS = [
     'reviews',
     'users',
     'orders',
+    'categories',
     'django_extensions',
     'django_filters',
+    
+    
+    'drf_yasg',
 
 ]
 

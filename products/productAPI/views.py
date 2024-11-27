@@ -24,11 +24,14 @@ class ModelPermissions(permissions.DjangoModelPermissions):
             #all users can view products even if they are not authenticated
                     return True
         elif user and user.is_authenticated: 
-            #only authenticated users having the right permissions can add, update and delete products
+            #only SU and authenticated users having the right permissions can add, update and delete products
+            if user.is_superuser:
+                return True
+            
             match request.method :
                 case 'POST':
                     return user.has_perm('products.add_product')
-                case 'PUT':
+                case 'PUT' | 'PATCH':
                     return user.has_perm('products.change_product')
                 case 'DELETE':
                     return user.has_perm('products.delete_product')
@@ -83,3 +86,44 @@ class ProductViewSet(viewsets.ModelViewSet):
             Image.objects.create(product=product, image=file)
 
         return Response({"message": "Images uploaded successfully"}, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=['delete'], url_path='delete-all-images')
+    def delete_all_images(self, request, pk=None):
+        """
+        Deletes all images associated with the specified product.
+        """
+        try:
+            product = self.get_object()
+        except NotFound:
+            return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all images associated with the product
+        images_count = product.images.count()
+        if images_count == 0:
+            return Response({"message": "No images to delete."}, status=status.HTTP_404_NOT_FOUND)
+
+        product.images.all().delete()
+        return Response({"message": f"Deleted all {images_count} images successfully."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-specific-images')
+    def delete_specific_images(self, request, pk=None):
+        """
+        Deletes specific images associated with the specified product.
+        """
+        try:
+            product = self.get_object()
+        except NotFound:
+            return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if image IDs are provided in the request data
+        image_ids = request.data.get('image_ids', [])
+        if not image_ids:
+            return Response({"detail": "No image IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter and delete the specified images
+        images_to_delete = product.images.filter(id__in=image_ids)  # Assuming `images` is a related name
+        if not images_to_delete.exists():
+            return Response({"detail": "No matching images found for deletion."}, status=status.HTTP_404_NOT_FOUND)
+
+        images_deleted_count = images_to_delete.count()
+        images_to_delete.delete()
+        return Response({"message": f"Deleted {images_deleted_count} images successfully."}, status=status.HTTP_200_OK)

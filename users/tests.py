@@ -79,7 +79,7 @@ class UserViewSetTests(APITestCase):
         """Test that only authenticated users can list users"""
         # Unauthenticated request
         response = self.client.get(self.users_list_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
         # Authenticated request
         self.client.force_authenticate(user=self.regular_user)
@@ -97,7 +97,7 @@ class UserViewSetTests(APITestCase):
         
         # Unauthenticated request
         response = self.client.get(self.get_user_detail_url(other_user.id))
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
         # Regular user trying to access other user's profile
         self.client.force_authenticate(user=self.regular_user)
@@ -145,7 +145,7 @@ class UserViewSetTests(APITestCase):
         # Regular user trying to delete another user
         self.client.force_authenticate(user=self.regular_user)
         response = self.client.delete(self.get_user_detail_url(user_to_delete.id))
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
         # Regular user deleting their own profile
         response = self.client.delete(self.get_user_detail_url(self.regular_user.id))

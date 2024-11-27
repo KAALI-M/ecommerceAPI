@@ -20,11 +20,11 @@ class ModelPermissions(permissions.DjangoModelPermissions):
         elif user and user.is_authenticated: 
             match request.method :
                 case 'POST': 
-                    return user.has_perm('products.add_product')
-                case 'PUT':
-                    return user.has_perm('products.change_product')
+                    return user.has_perm('discounts.add_discount')
+                case 'PUT'|'PATCH':
+                    return user.has_perm('discounts.change_discount')
                 case 'DELETE':
-                    return user.has_perm('products.delete_product')
+                    return user.has_perm('discounts.delete_discount')
         return False
     
 class ProductFilter(FilterSet):   
